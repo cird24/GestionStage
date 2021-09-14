@@ -5,11 +5,16 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Blazorise;
+using Blazorise.Material;
+using Blazorise.Icons.Material;
+using MatBlazor;
+using Microsoft.EntityFrameworkCore;
 using GestiStage.Data;
+using Microsoft.AspNetCore.ResponseCompression;
 
 namespace GestiStage
 {
@@ -26,9 +31,23 @@ namespace GestiStage
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
+            services
+                .AddBlazorise( options =>
+                {
+                    options.ChangeTextOnKeyPress = true; // optional
+                } )
+                .AddMaterialProviders()
+                .AddMaterialIcons();
+            services.AddMatBlazor();
             services.AddRazorPages();
             services.AddServerSideBlazor();
-            services.AddSingleton<WeatherForecastService>();
+             services.AddDbContextFactory<GestiStageDbContext>(opt =>
+                opt.UseSqlite($"Data Source={nameof(GestiStageDbContext.GestiStageDb)}.db"));
+            services.AddResponseCompression(opts =>
+                {
+                    opts.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(
+                        new[] { "application/octet-stream" });
+                });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -41,11 +60,8 @@ namespace GestiStage
             else
             {
                 app.UseExceptionHandler("/Error");
-                // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-                app.UseHsts();
             }
 
-            app.UseHttpsRedirection();
             app.UseStaticFiles();
 
             app.UseRouting();
